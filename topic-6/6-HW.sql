@@ -184,17 +184,35 @@ SELECT
 SELECT 
 	SUM(likes_count) 
 FROM (
-	SELECT COUNT(id) AS likes_count, user_id
+	SELECT COUNT(id) AS likes_count, content_id
 	FROM likes
-	WHERE content_type_id = 2
-	GROUP BY user_id
-	ORDER BY (SELECT birthday FROM profiles WHERE likes.user_id = profiles.user_id) DESC LIMIT 10
+	WHERE content_type_id = 2 -- 'users'
+	GROUP BY content_id
+	ORDER BY (SELECT birthday FROM profiles WHERE likes.content_id = profiles.user_id) DESC LIMIT 10
 ) AS temporary_sum;
 
--- 6.5 Найти 10 пользователей, которые проявляют наименьшую активность в использовании социальной сети (критерии активности необходимо определить самостоятельно).
--- Критерии активности: количество постов
 
-SELECT COUNT(id) AS posts_count, user_id
-FROM posts
+-- 6.5 Найти 10 пользователей, которые проявляют наименьшую активность в использовании социальной сети (критерии активности необходимо определить самостоятельно).
+-- Критерии активности: количество постов, количество отправленных сообщений, количество оставленных лайков. 
+-- Пользователь с наименьшей суммой указанных метрик проявляет наименьшую активность.
+
+SELECT
+	SUM(activity) AS activity,
+	user_id
+FROM
+	((SELECT COUNT(id) AS activity, user_id
+	FROM posts
+	GROUP BY user_id
+	ORDER BY activity, user_id)
+	UNION
+	(SELECT COUNT(id) AS activity, from_user_id AS user_id
+	FROM messages
+	GROUP BY user_id
+	ORDER BY activity, user_id)
+	UNION
+	(SELECT COUNT(id) AS activity, user_id
+	FROM likes
+	GROUP BY user_id
+	ORDER BY activity, user_id)) AS temporary_activity
 GROUP BY user_id
-ORDER BY posts_count, user_id LIMIT 10
+ORDER BY activity, user_id LIMIT 10;
