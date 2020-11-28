@@ -137,7 +137,7 @@ SELECT
 	orders.id AS order_id
 FROM
 	users
-RIGHT JOIN
+JOIN
 	orders
 ON
 	users.id = orders.user_id;
@@ -154,11 +154,11 @@ SELECT
 	orders_products.total AS total
 FROM
 	users
-RIGHT JOIN
+JOIN
 	orders
 ON
 	users.id = orders.user_id
-RIGHT JOIN
+JOIN
 	orders_products
 ON
 	orders.id = orders_products.order_id;
