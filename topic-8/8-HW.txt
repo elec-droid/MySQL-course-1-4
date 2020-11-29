@@ -1,0 +1,74 @@
+-- Переписать запросы, заданые к ДЗ урока 6, с использованием JOIN
+-- 8.3 (6.3) Определить кто больше поставил лайков (всего) - мужчины или женщины? Подсчёт лайков провёл по всему контенту, связанному с пользователем
+SELECT
+	p.gender,
+	COUNT(*) AS total
+FROM profiles AS p
+	JOIN likes AS l
+		ON l.user_id = p.user_id
+GROUP BY p.gender
+ORDER BY total DESC LIMIT 1;
+
+
+-- 8.4 (6.4) Подсчитать общее количество лайков десяти самым молодым пользователям (сколько лайков получили 10 самых молодых пользователей). 
+-- Подсчёт лайков провёл по всему контенту, связанному с пользователем
+SELECT SUM(l_count) FROM
+	(SELECT p.user_id, p.birthday, COUNT(l.id) AS l_count
+	FROM profiles AS p
+		JOIN likes AS l
+			ON p.user_id = l.content_id
+	GROUP BY p.user_id
+	ORDER BY p.birthday DESC LIMIT 10) AS temp_sum;
+
+
+/*
+ * 8.5 (6.5) Найти 10 пользователей, которые проявляют наименьшую активность в использовании социальной сети 
+ * (критерии активности необходимо определить самостоятельно).
+ * 
+ * Критерии активности: количество постов, количество отправленных сообщений, количество оставленных лайков.
+ * Пользователь с наименьшей суммой указанных метрик проявляет наименьшую активность.
+ */ 
+-- Вариант с DISTINCT
+SELECT
+	(SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = u.id) AS 'fname lname',
+	u.id AS 'user id',
+	(COUNT(DISTINCT po.id)
+	+ COUNT(DISTINCT m.id)
+	+ COUNT(DISTINCT l.id)) AS activity
+FROM users AS u
+	LEFT JOIN posts AS po
+		ON po.user_id = u.id
+	LEFT JOIN messages AS m
+		ON m.from_user_id = u.id
+	LEFT JOIN likes AS l
+		ON l.user_id = u.id
+GROUP BY u.id
+ORDER BY activity, u.id LIMIT 10;
+
+
+/*
+ * Вариант из редыдущего задания - изменения для корректного подсчёта
+ * 
+ * Решения задания № 5 из 6-го урока было с ошибкой - при подсчёте итоговой суммы "GROUP BY user_id"
+ * объеденял строки, в которых обе колонки совпадали. Из-за этого у части пользователей (например, 
+ * имеющие два сообщения и два лайка) показатель активности был в два-три раза ниже реального.
+ * Добавил столбец обозначающий таблицу для устранения ошибки.
+ */
+SELECT
+	(SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE id = user_id) AS 'fname lname',
+	user_id AS 'user id',
+	SUM(activity) AS activity
+FROM
+	((SELECT COUNT(*) AS activity, user_id, (SELECT 'posts') AS 'table'
+	FROM posts
+	GROUP BY user_id)
+	UNION
+	(SELECT COUNT(*) AS activity, from_user_id AS user_id, (SELECT'messages') AS 'table'
+	FROM messages
+	GROUP BY user_id)
+	UNION
+	(SELECT COUNT(*) AS activity, user_id, (SELECT'likes') AS 'table'
+	FROM likes
+	GROUP BY user_id)) AS temporary_activity
+GROUP BY user_id
+ORDER BY activity, user_id LIMIT 10;
