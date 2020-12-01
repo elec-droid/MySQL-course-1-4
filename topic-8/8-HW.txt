@@ -13,10 +13,12 @@ ORDER BY total DESC LIMIT 1;
 -- 8.4 (6.4) Подсчитать общее количество лайков десяти самым молодым пользователям (сколько лайков получили 10 самых молодых пользователей). 
 -- Подсчёт лайков провёл по всему контенту, связанному с пользователем
 SELECT SUM(l_count) FROM
-	(SELECT p.user_id, p.birthday, COUNT(l.id) AS l_count
+	(SELECT p.user_id, p.birthday, COUNT(ct.id) AS l_count
 	FROM profiles AS p
-		JOIN likes AS l
+		LEFT JOIN likes AS l
 			ON p.user_id = l.content_id
+		LEFT JOIN content_types AS ct
+			ON l.content_type_id = ct.id AND ct.name = 'users'
 	GROUP BY p.user_id
 	ORDER BY p.birthday DESC LIMIT 10) AS temp_sum;
 
