@@ -18,8 +18,11 @@ COMMIT;
 CREATE OR REPLACE VIEW products_catalogs(product_name, catalog_name) AS
 SELECT
 	products.name,
-	(SELECT catalogs.name FROM catalogs WHERE catalogs.id = products.id)
-FROM products;
+	catalogs.name
+FROM products
+	LEFT JOIN catalogs
+		ON products.id = catalogs.id
+
 SELECT * FROM products_catalogs;
 
 

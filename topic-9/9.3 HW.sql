@@ -12,12 +12,13 @@ DELIMITER //
 CREATE FUNCTION hello()
 RETURNS TINYTEXT NO SQL
 BEGIN
+	SET @current_hour = HOUR(CURTIME());
 	CASE 
-		WHEN CURTIME() BETWEEN '06:00:00' AND '12:00:00' THEN
+		WHEN @current_hour BETWEEN 6 AND 11 THEN
 			RETURN 'Доброе утро';
-		WHEN CURTIME() BETWEEN '12:00:00' AND '18:00:00' THEN
+		WHEN @current_hour BETWEEN 12 AND 17 THEN
 			RETURN 'Добрый день';
-		WHEN CURTIME() BETWEEN '18:00:00' AND '00:00:00' THEN
+		WHEN @current_hour BETWEEN 18 AND 23 THEN
 			RETURN 'Добрый вечер';
 		ELSE
 			RETURN 'Доброй ночи';
@@ -41,7 +42,7 @@ CREATE TRIGGER NotNullInsetTrigger BEFORE INSERT ON products
 FOR EACH ROW
 BEGIN
 	IF(ISNULL(NEW.name) AND ISNULL(NEW.description)) THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Trigger Warning! NULL in both fields!';
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insert on "products" Warning! Fields "name" and "description" is NULL!';
 	END IF;
 END //
 delimiter ;
@@ -56,7 +57,7 @@ CREATE TRIGGER NotNullUpdateTrigger BEFORE UPDATE ON products
 FOR EACH ROW
 BEGIN
 	IF(ISNULL(NEW.name) AND ISNULL(NEW.description)) THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Trigger Warning! NULL in both fields!';
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Update on "products" Warning! Fields "name" and "description" is NULL!';
 	END IF;
 END //
 delimiter ;
