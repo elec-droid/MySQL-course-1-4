@@ -38,18 +38,16 @@ INSERT INTO communities_users (user_id, community_id) VALUES
 	(58, 10), (59, 10), (61, 10), (62, 10), (63, 10), (64, 10), (65, 10), (66, 10), (67, 10), (68, 10);
 
 SELECT DISTINCT c.name AS group_name,
-	ROUND(COUNT(cu.user_id) 	 OVER()
-		/ MAX(cu.community_id) OVER()
-	) AS avg_in_group,
+	ROUND(COUNT(cu.user_id)	OVER()
+		/ (SELECT COUNT(id) FROM communities)) AS avg_in_group,
 	FIRST_VALUE(p.birthday) OVER(PARTITION BY c.id ORDER BY p.birthday DESC) AS youngest,
 	FIRST_VALUE(p.birthday) OVER(PARTITION BY c.id ORDER BY p.birthday) AS oldest,
 	COUNT(cu.user_id) 		OVER(PARTITION BY c.id) AS total_in_group,
-	FIRST_VALUE(p.user_id) 	OVER(ORDER BY p.user_id DESC) AS total_users,
+	(SELECT COUNT(id) FROM users) AS total_users,
 	ROUND(COUNT(cu.user_id) OVER(PARTITION BY c.id)
-		/ COUNT(p.user_id)  OVER() * 100, 1
-	) AS "%%"
+		/ (SELECT COUNT(id) FROM users) * 100, 1) AS "%%"
 FROM profiles AS p
-	LEFT JOIN communities_users AS cu
+	JOIN communities_users AS cu
 		ON cu.user_id = p.user_id
-	LEFT JOIN communities AS c
+	RIGHT JOIN communities AS c
 		ON cu.community_id = c.id;
